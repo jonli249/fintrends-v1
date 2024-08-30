@@ -1,9 +1,8 @@
 from flask import Flask, request, jsonify
 from apiclient.discovery import build
-import pandas as pd
 import os
 from dotenv import load_dotenv
-from typing import Any
+from typing import Any, List, Dict
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(current_dir)
@@ -32,13 +31,13 @@ class Timeline:
 
     def get_search_volumes(
         self,
-        terms: list, 
+        terms: List[str], 
         start_date: str, 
         end_date: str, 
         frequency: str,
         geo_restriction: str,
         geo_restriction_option: str
-    ) -> pd.DataFrame:
+    ) -> List[Dict[str, Any]]:
         if geo_restriction == 'country':
             req = self.service.getTimelinesForHealth(
                 terms=terms, time_startDate=start_date,
@@ -77,7 +76,7 @@ class Timeline:
                     'value': point['value']
                 })
         
-        return pd.DataFrame(data)
+        return data
 
     def get_related(
             self,
@@ -107,7 +106,7 @@ def search_volumes():
     data = request.json
     search = Timeline()
     
-    df = search.get_search_volumes(
+    results = search.get_search_volumes(
         terms=data['terms'],
         start_date=data['start_date'],
         end_date=data['end_date'],
@@ -116,8 +115,10 @@ def search_volumes():
         geo_restriction_option=data['geo_restriction_option']
     )
     
-    return jsonify(df.to_dict(orient='records'))
+    return jsonify(results)
 
+
+'''
 @app.route('/api/related', methods=['POST'])
 def related():
     data = request.json
@@ -135,3 +136,4 @@ def related():
 
 if __name__ == '__main__':
     app.run(debug=True)
+'''
