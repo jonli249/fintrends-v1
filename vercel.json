@@ -1,11 +1,14 @@
 {
-    "version": 2,
+    "functions": {
+      "api/*.js": {
+        "includeFiles": "dist/**"
+      }
+    },
     "builds": [
-      { "src": "api/**/*.py", "use": "@vercel/python" },
-      { "src": "package.json", "use": "@vercel/next" }
-    ],
-    "routes": [
-      { "src": "/api/(.*)", "dest": "api/$1" },
-      { "src": "/(.*)", "dest": "/$1" }
+      {
+        "src": "api/**/*.js",
+        "use": "@vercel/node"
+      }
     ]
   }
+  

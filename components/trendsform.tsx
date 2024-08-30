@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface SearchResult {
   term: string;
@@ -16,11 +17,12 @@ const GoogleTrendsSearch: React.FC = () => {
   const [searchTerms, setSearchTerms] = useState<string>('');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
-  const [frequency, setFrequency] = useState<string>('day');
+  const [frequency, setFrequency] = useState<string>('day');a
   const [geoRestriction, setGeoRestriction] = useState<string>('country');
   const [geoRestrictionOption, setGeoRestrictionOption] = useState<string>('US');
   const [results, setResults] = useState<SearchResult[] | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<'data' | 'chart'>('data');
 
   const handleSearch = async () => {
     setIsLoading(true);
@@ -45,24 +47,6 @@ const GoogleTrendsSearch: React.FC = () => {
       console.error('Error fetching data:', error);
     }
     setIsLoading(false);
-  };
-
-  const downloadCSV = () => {
-    if (!results) return;
-
-    const csvRows = [
-      ['Term', 'Date', 'Value'],
-      ...results.map(result => [result.term, result.date, result.value])
-    ];
-
-    const csvContent = `data:text/csv;charset=utf-8,${csvRows.map(e => e.join(',')).join('\n')}`;
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', 'search_results.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   return (
@@ -95,7 +79,7 @@ const GoogleTrendsSearch: React.FC = () => {
             <SelectTrigger>
               <SelectValue placeholder="Select frequency" />
             </SelectTrigger>
-            <SelectContent className="bg-white">
+            <SelectContent>
               <SelectItem value="day">Daily</SelectItem>
               <SelectItem value="week">Weekly</SelectItem>
               <SelectItem value="month">Monthly</SelectItem>
@@ -105,7 +89,7 @@ const GoogleTrendsSearch: React.FC = () => {
             <SelectTrigger>
               <SelectValue placeholder="Select geo restriction" />
             </SelectTrigger>
-            <SelectContent className="bg-white">
+            <SelectContent>
               <SelectItem value="country">Country</SelectItem>
               <SelectItem value="region">Region</SelectItem>
               <SelectItem value="dma">DMA</SelectItem>
@@ -122,34 +106,60 @@ const GoogleTrendsSearch: React.FC = () => {
         <Button onClick={handleSearch} disabled={isLoading}>
           {isLoading ? 'Searching...' : 'Search'}
         </Button>
-        {results && (
-          <Button className="ml-4" onClick={downloadCSV}>
-            Download CSV
-          </Button>
-        )}
       </CardFooter>
       {results && (
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm text-left">
-              <thead>
-                <tr>
-                  <th className="px-4 py-2">Term</th>
-                  <th className="px-4 py-2">Date</th>
-                  <th className="px-4 py-2">Value</th>
-                </tr>
-              </thead>
-              <tbody>
-                {results.map((result, index) => (
-                  <tr key={index} className="border-t">
-                    <td className="px-4 py-2">{result.term}</td>
-                    <td className="px-4 py-2">{result.date}</td>
-                    <td className="px-4 py-2">{result.value}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="flex space-x-4">
+            <Button onClick={() => setActiveTab('data')} variant={activeTab === 'data' ? 'solid' : 'outline'}>
+              Data
+            </Button>
+            <Button onClick={() => setActiveTab('chart')} variant={activeTab === 'chart' ? 'solid' : 'outline'}>
+              Chart
+            </Button>
           </div>
+          {activeTab === 'data' && (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm text-left">
+                <thead>
+                  <tr>
+                    <th className="px-4 py-2">Term</th>
+                    <th className="px-4 py-2">Date</th>
+                    <th className="px-4 py-2">Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {results.map((result, index) => (
+                    <tr key={index} className="border-t">
+                      <td className="px-4 py-2">{result.term}</td>
+                      <td className="px-4 py-2">{result.date}</td>
+                      <td className="px-4 py-2">{result.value}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {activeTab === 'chart' && (
+            <ResponsiveContainer width="100%" height={400}>
+              <LineChart data={results}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                {Array.from(new Set(results.map(r => r.term))).map((term, index) => (
+                  <Line
+                    key={term}
+                    type="monotone"
+                    dataKey="value"
+                    data={results.filter(r => r.term === term)}
+                    name={term}
+                    stroke={`#${Math.floor(Math.random() * 16777215).toString(16)}`}
+                  />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          )}
         </CardContent>
       )}
     </Card>
