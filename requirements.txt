@@ -1,2 +1,4 @@
-numpy==1.24.3
+setuptools>=67.0.0
+wheel
+numpy==1.26.0 --only-binary=numpy
 Flask==3.0.3
